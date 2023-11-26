@@ -1,7 +1,8 @@
 const express = require('express');
-const { env } = require('process');
 require("dotenv").config()
 const app = express();
+
+const db = require('./db/dbConn');
 
 app.get('/', (req, res) => {
   res.send('Termincek backend Home!');
