@@ -1,13 +1,11 @@
-const express = require('express');
+const express = require('express')
 require("dotenv").config()
-const app = express();
+const app = express()
 
-const db = require('./db/dbConn');
+const db = require('./db/dbConn')
 
-app.get('/', (req, res) => {
-  res.send('Termincek backend Home!');
-})
+app.use('/', require('./routes/routes'))
 
 app.listen(process.env.PORT, () => {
-  console.log('Server is running on port: ' + process.env.PORT);
+  console.log('Server is running on port: ' + process.env.PORT)
 })

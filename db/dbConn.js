@@ -1,4 +1,6 @@
 const mysql = require('mysql2');
+const fs = require('fs');
+const path = require('path');
 
 const conn = mysql.createConnection({
   host: process.env.DB_HOST,
@@ -15,3 +17,6 @@ conn.connect((error) => {
     console.log('Database connection established!');
   }
 })
+
+let datapool = {}
+
