@@ -1,85 +1,72 @@
 const mysql = require('mysql2');
 
-const conn = mysql.createConnection({
-  host: process.env.DB_HOST,
-  port: process.env.DB_PORT,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASS,
-  database: process.env.DB_DATABASE
-})
-
-conn.connect((error) => {
-  if (error) {
-    console.log(error);
-  } else {
-    console.log('Database connection established!');
+class Database {
+  constructor() {
+    this.conn = mysql.createConnection({
+      host: process.env.DB_HOST,
+      port: process.env.DB_PORT,
+      user: process.env.DB_USER,
+      password: process.env.DB_PASS,
+      database: process.env.DB_DATABASE
+    });
   }
-})
 
-let datapool = {};
+  connect() {
+    this.conn.connect((error) => {
+      if (error) {
+        console.log(error);
+      } else {
+        console.log('Database connection established!');
+      }
+    });
+  }
 
-// na ne bo useful
-datapool.vseStoritve = () => {
-  return new Promise((resolve, reject) => {
-    conn.query(`SELECT * FROM Storitve`, (err, res) => {
-      if (err) { return reject(err) }
-      return resolve(res)
-    })
-  })
-}
+  query(sql, params = []) {
+    return new Promise((resolve, reject) => {
+      this.conn.query(sql, params, (err, res) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(res);
+        }
+      });
+    });
+  }
 
-datapool.podjetjeStoritve = (podjetje_id) => {
-  return new Promise((resolve, reject) => {
-    conn.query(`SELECT * FROM Storitve WHERE podjetje_id = ?`, podjetje_id, (err, res) => {
-      if (err) { return reject(err) }
-      return resolve(res)
-    })
-  })
-}
+  vseStoritve() {
+    return this.query(`SELECT * FROM Storitve`);
+  }
 
-datapool.ustvariNarocilo = (narocilo_id, narocilo_cas, narocilo_opombe, stranka_id, delavec_id, storitev_id) => {
-  return new Promise((resolve, reject) => {
-    conn.query(
+  podjetjeStoritve(podjetje_id) {
+    return this.query(`SELECT * FROM Storitve WHERE podjetje_id = ?`, podjetje_id);
+  }
+
+  ustvariNarocilo(narocilo_id, narocilo_cas, narocilo_opombe, stranka_id, delavec_id, storitev_id) {
+    return this.query(
       `INSERT INTO Narocilo (narocilo_id, narocilo_cas, narocilo_opombe, stranka_id, delavec_id, storitev_id) VALUES (?,?,?,?,?,?)`,
-      [narocilo_id, narocilo_cas, narocilo_opombe, stranka_id, delavec_id, storitev_id],
-      (err, res) => {
-        if (err) { return reject(err) }
-        return resolve(res)
-      }
-    )
-  })
-}
-// TODO: Brisi narocilo
+      [narocilo_id, narocilo_cas, narocilo_opombe, stranka_id, delavec_id, storitev_id]
+    );
+  }
 
-datapool.AuthStranka = (stranka_eposta) => {
-  return new Promise((resolve, reject) => {
-    conn.query('SELECT * FROM stranka WHERE stranka_eposta = ?', stranka_eposta, (err, res, fields) => {
-      if (err) { return reject(err) }
-      return resolve(res)
-    })
-  })
-}
+  brisiNarocilo(narocilo_id) {
+    return this.query(`DELETE FROM Narocilo WHERE narocilo_id = ?`, narocilo_id);
+  }
 
-datapool.AuthDelavec = (delavec_eposta) => {
-  return new Promise((resolve, reject) => {
-    conn.query('SELECT * FROM delavec WHERE delavec_eposta = ?', delavec_eposta, (err, res, fields) => {
-      if (err) { return reject(err) }
-      return resolve(res)
-    })
-  })
+  AuthStranka(stranka_eposta) {
+    return this.query('SELECT * FROM stranka WHERE stranka_eposta = ?', stranka_eposta);
+  }
+
+  AuthDelavec(delavec_eposta) {
+    return this.query('SELECT * FROM delavec WHERE delavec_eposta = ?', delavec_eposta);
+  }
+
+  RegistracijaStranka(ime, priimek, eposta, geslo, telefon) {
+    return this.query(`INSERT INTO Stranka (stranka_ime,stranka_priimek,stranka_eposta,stranka_geslo,stranka_telefon) VALUES (?,?,?,?,?)`,
+      [ime, priimek, eposta, geslo, telefon]);
+  }
 }
 
-datapool.AddStranka = (ime, priimek, eposta, geslo, telefon) => {
-  return new Promise((resolve, reject) => {
-    conn.query(`INSERT INTO Stranka (stranka_ime,stranka_priimek,stranka_eposta,stranka_geslo,stranka_telefon) VALUES (?,?,?,?,?,?)`,
-      [ime, priimek, eposta, geslo, telefon],
-      (err, res) => {
-        if (err) { return reject(err) }
-        return resolve(res)
-      }
-    )
-  })
-}
+const db = new Database();
+db.connect();
 
-
-module.exports = datapool;
+module.exports = db;
