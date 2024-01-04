@@ -53,7 +53,7 @@ router.post('/registracija', async (req, res, next) => {
       req.body.priimek,
       req.body.eposta,
       req.body.geslo,
-      req.body.tel
+      req.body.telefon
     )
     res.statusCode = 200;
     res.json({ user: queryResult, status: { success: true, msg: "User created" } })
