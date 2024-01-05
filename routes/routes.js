@@ -8,7 +8,6 @@ router.get('/api', (req, res) => {
 
 router.post('/prijava', async (req, res, next) => {
   try {
-    console.log(req.body);
     const eposta = req.body.eposta;
     const geslo = req.body.geslo;
     if (eposta && geslo) {
@@ -18,23 +17,23 @@ router.post('/prijava', async (req, res, next) => {
           //req.session.user = queryResult
           //req.session.logged_in = true
           res.statusCode = 200;
-          res.json({ user: queryResult[0], status: { success: true, msg: "Logged in" } })
+          res.json({ stranka: queryResult[0], status: { success: true, msg: "Logged in" } })
         } else {
           // Če je geslo napačno
           res.statusCode = 200;
-          res.json({ user: null, status: { success: false, msg: "email or password incorrect" } })
+          res.json({ stranka: null, status: { success: false, msg: "email or password incorrect" } })
           console.log("INCORRECT PASSWORD")
         }
       } else {
         // Če ne najde useja v bazi
         res.statusCode = 200;
-        res.send({ user: null, status: { success: false, msg: "email not registsred" } })
+        res.send({ stranka: null, status: { success: false, msg: "email not registsred" } })
       }
     }
     else {
       // če nisi nič napisal
       res.statusCode = 200;
-      res.send({ logged: false, user: null, status: { success: false, msg: "Input element missing" } })
+      res.send({ stranka: null, status: { success: false, msg: "Input element missing" } })
       console.log("Please enter email and Password!")
     }
     res.end();
@@ -47,7 +46,6 @@ router.post('/prijava', async (req, res, next) => {
 
 router.post('/registracija', async (req, res, next) => {
   try {
-    console.log("Body: ", req.body);
     const queryResult = await DB.RegistracijaStranka(
       req.body.ime,
       req.body.priimek,
@@ -56,7 +54,34 @@ router.post('/registracija', async (req, res, next) => {
       req.body.telefon
     )
     res.statusCode = 200;
-    res.json({ user: queryResult, status: { success: true, msg: "User created" } })
+    res.json({ stranka: queryResult, status: { success: true, msg: "User created" } })
+    res.end();
+  } catch (err) {
+    console.log(err)
+    res.sendStatus(500)
+    next()
+  }
+}
+);
+
+router.get('/podjetja', async (req, res, next) => {
+  try {
+    const queryResult = await DB.VsaPodjetja()
+    res.statusCode = 200;
+    res.json(queryResult)
+    res.end();
+  } catch (err) {
+    console.log(err)
+    res.sendStatus(500)
+    next()
+  }
+});
+
+router.get('/podjetje/:podjetje_id', async (req, res, next) => {
+  try {
+    const queryResult = await DB.Podjetje(req.params.podjetje_id)
+    res.statusCode = 200;
+    res.json(queryResult)
     res.end();
   } catch (err) {
     console.log(err)

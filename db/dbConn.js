@@ -64,6 +64,18 @@ class Database {
     return this.query(`INSERT INTO Stranka (stranka_ime,stranka_priimek,stranka_eposta,stranka_geslo,stranka_telefon) VALUES (?,?,?,?,?)`,
       [ime, priimek, eposta, geslo, telefon]);
   }
+
+  VsaPodjetja() {
+    return this.query(`SELECT * FROM Podjetje`);
+  }
+
+  Podjetje(id) {
+    return this.query(`SELECT * FROM Podjetje WHERE podjetje_id = ?`, id);
+  }
+
+  VseStoritve(podjetje_id) {
+    return this.query(`SELECT * FROM Storitve WHERE podjetje_id = ?`, podjetje_id);
+  }
 }
 
 const db = new Database();
