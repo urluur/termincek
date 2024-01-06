@@ -74,7 +74,7 @@ class Database {
   }
 
   VseStoritve(podjetje_id) {
-    return this.query(`SELECT * FROM Storitve WHERE podjetje_id = ?`, podjetje_id);
+    return this.query(`SELECT * FROM Storitev WHERE podjetje_id = ?`, podjetje_id);
   }
 }
 

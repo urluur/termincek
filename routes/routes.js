@@ -91,4 +91,18 @@ router.get('/podjetje/:podjetje_id', async (req, res, next) => {
 }
 );
 
+router.get('/storitve/:podjetje_id', async (req, res, next) => {
+  try {
+    const queryResult = await DB.VseStoritve(req.params.podjetje_id)
+    res.statusCode = 200;
+    res.json(queryResult)
+    res.end();
+  } catch (err) {
+    console.log(err)
+    res.sendStatus(500)
+    next()
+  }
+}
+);
+
 module.exports = router;
