@@ -48,7 +48,7 @@ class Database {
     );
   }
 
-  brisiNarocilo(narocilo_id) {
+  PrekliciNarocilo(narocilo_id) {
     return this.query(`DELETE FROM Narocilo WHERE narocilo_id = ?`, narocilo_id);
   }
 
@@ -79,6 +79,18 @@ class Database {
 
   VsiDelavci(podjetje_id) {
     return this.query(`SELECT * FROM Delavec WHERE podjetje_id = ?`, podjetje_id);
+  }
+
+  StrankaNarocila(stranka_id) {
+    return this.query(`
+    SELECT n.*, s.*, d.delavec_ime, d.delavec_priimek, p.podjetje_naziv, p.podjetje_naslov
+    FROM Narocilo n 
+    JOIN Storitev s ON n.storitev_id = s.storitev_id 
+    JOIN Delavec d ON n.delavec_id = d.delavec_id 
+    JOIN Podjetje p ON s.podjetje_id = p.podjetje_id
+    WHERE n.stranka_id = ? 
+    ORDER BY n.narocilo_id DESC
+    `, stranka_id);
   }
 }
 

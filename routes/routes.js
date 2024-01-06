@@ -93,4 +93,23 @@ router.get('/delavci/:podjetje_id', async (req, res, next) => {
   }
 });
 
+router.get('/narocila/:stranka_id', async (req, res, next) => {
+  try {
+    const queryResult = await DB.StrankaNarocila(req.params.stranka_id)
+    res.status(200).json(queryResult);
+  } catch (err) {
+    next(err)
+  }
+}
+);
+
+router.delete('/narocilo/preklici/:narocilo_id/', async (req, res, next) => {
+  try {
+    const queryResult = await DB.PrekliciNarocilo(req.params.narocilo_id)
+    res.status(200).json(queryResult);
+  } catch (err) {
+    next(err)
+  }
+});
+
 module.exports = router;
