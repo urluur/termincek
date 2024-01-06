@@ -8,39 +8,23 @@ router.get('/api', (req, res) => {
 
 router.post('/prijava', async (req, res, next) => {
   try {
-    const eposta = req.body.eposta;
-    const geslo = req.body.geslo;
+    const { eposta, geslo } = req.body;
     if (eposta && geslo) {
       const queryResult = await DB.AuthStranka(eposta)
       if (queryResult.length > 0) {
         if (geslo === queryResult[0].stranka_geslo) {
-          //req.session.user = queryResult
-          //req.session.logged_in = true
-          res.statusCode = 200;
-          res.json({ stranka: queryResult[0], status: { success: true, msg: "Logged in" } })
+          res.status(200).json({ stranka: queryResult[0], status: { success: true, msg: "Logged in" } })
         } else {
-          // Če je geslo napačno
-          res.statusCode = 200;
-          res.json({ stranka: null, status: { success: false, msg: "email or password incorrect" } })
-          console.log("INCORRECT PASSWORD")
+          res.status(200).json({ stranka: null, status: { success: false, msg: "email or password incorrect" } })
         }
       } else {
-        // Če ne najde useja v bazi
-        res.statusCode = 200;
-        res.send({ stranka: null, status: { success: false, msg: "email not registsred" } })
+        res.status(200).send({ stranka: null, status: { success: false, msg: "email not registered" } })
       }
+    } else {
+      res.status(200).send({ stranka: null, status: { success: false, msg: "Input element missing" } })
     }
-    else {
-      // če nisi nič napisal
-      res.statusCode = 200;
-      res.send({ stranka: null, status: { success: false, msg: "Input element missing" } })
-      console.log("Please enter email and Password!")
-    }
-    res.end();
   } catch (err) {
-    console.log(err)
-    res.sendStatus(500)
-    next()
+    next(err)
   }
 });
 
@@ -61,8 +45,7 @@ router.post('/registracija', async (req, res, next) => {
     res.sendStatus(500)
     next()
   }
-}
-);
+});
 
 router.get('/podjetja', async (req, res, next) => {
   try {
@@ -88,8 +71,7 @@ router.get('/podjetje/:podjetje_id', async (req, res, next) => {
     res.sendStatus(500)
     next()
   }
-}
-);
+});
 
 router.get('/storitve/:podjetje_id', async (req, res, next) => {
   try {
@@ -98,11 +80,17 @@ router.get('/storitve/:podjetje_id', async (req, res, next) => {
     res.json(queryResult)
     res.end();
   } catch (err) {
-    console.log(err)
-    res.sendStatus(500)
-    next()
+    next(err)
   }
-}
-);
+});
+
+router.get('/delavci/:podjetje_id', async (req, res, next) => {
+  try {
+    const queryResult = await DB.VsiDelavci(req.params.podjetje_id)
+    res.status(200).json(queryResult);
+  } catch (err) {
+    next(err)
+  }
+});
 
 module.exports = router;

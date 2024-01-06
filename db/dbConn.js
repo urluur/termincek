@@ -76,6 +76,10 @@ class Database {
   VseStoritve(podjetje_id) {
     return this.query(`SELECT * FROM Storitev WHERE podjetje_id = ?`, podjetje_id);
   }
+
+  VsiDelavci(podjetje_id) {
+    return this.query(`SELECT * FROM Delavec WHERE podjetje_id = ?`, podjetje_id);
+  }
 }
 
 const db = new Database();
