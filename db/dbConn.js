@@ -41,47 +41,47 @@ class Database {
     return this.query(`SELECT * FROM Storitve WHERE podjetje_id = ?`, podjetje_id);
   }
 
-  ustvariNarocilo(narocilo_id, narocilo_cas, narocilo_opombe, stranka_id, delavec_id, storitev_id) {
+  ustvariNarocilo(narocilo_cas, narocilo_opombe, stranka_id, delavec_id, storitev_id) {
     return this.query(
-      `INSERT INTO Narocilo (narocilo_id, narocilo_cas, narocilo_opombe, stranka_id, delavec_id, storitev_id) VALUES (?,?,?,?,?,?)`,
-      [narocilo_id, narocilo_cas, narocilo_opombe, stranka_id, delavec_id, storitev_id]
+      `INSERT INTO Narocilo (narocilo_cas, narocilo_opombe, stranka_id, delavec_id, storitev_id) VALUES (?,?,?,?,?)`,
+      [narocilo_cas, narocilo_opombe, stranka_id, delavec_id, storitev_id]
     );
   }
 
-  PrekliciNarocilo(narocilo_id) {
+  prekliciNarocilo(narocilo_id) {
     return this.query(`DELETE FROM Narocilo WHERE narocilo_id = ?`, narocilo_id);
   }
 
-  AuthStranka(stranka_eposta) {
+  authStranka(stranka_eposta) {
     return this.query('SELECT * FROM stranka WHERE stranka_eposta = ?', stranka_eposta);
   }
 
-  AuthDelavec(delavec_eposta) {
+  authDelavec(delavec_eposta) {
     return this.query('SELECT * FROM delavec WHERE delavec_eposta = ?', delavec_eposta);
   }
 
-  RegistracijaStranka(ime, priimek, eposta, geslo, telefon) {
+  registracijaStranka(ime, priimek, eposta, geslo, telefon) {
     return this.query(`INSERT INTO Stranka (stranka_ime,stranka_priimek,stranka_eposta,stranka_geslo,stranka_telefon) VALUES (?,?,?,?,?)`,
       [ime, priimek, eposta, geslo, telefon]);
   }
 
-  VsaPodjetja() {
+  vsaPodjetja() {
     return this.query(`SELECT * FROM Podjetje`);
   }
 
-  Podjetje(id) {
+  podjetje(id) {
     return this.query(`SELECT * FROM Podjetje WHERE podjetje_id = ?`, id);
   }
 
-  VseStoritve(podjetje_id) {
+  vseStoritve(podjetje_id) {
     return this.query(`SELECT * FROM Storitev WHERE podjetje_id = ?`, podjetje_id);
   }
 
-  VsiDelavci(podjetje_id) {
+  vsiDelavci(podjetje_id) {
     return this.query(`SELECT * FROM Delavec WHERE podjetje_id = ?`, podjetje_id);
   }
 
-  StrankaNarocila(stranka_id) {
+  strankaNarocila(stranka_id) {
     return this.query(`
     SELECT n.*, s.*, d.delavec_ime, d.delavec_priimek, p.podjetje_naziv, p.podjetje_naslov
     FROM Narocilo n 
