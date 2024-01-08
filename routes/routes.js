@@ -169,4 +169,16 @@ router.delete('/narocilo/preklici',
     }
   });
 
+router.delete('/stranka/:stranka_id',
+  param('stranka_id').isInt(),
+  validateRequest,
+  async (req, res, next) => {
+    try {
+      const queryResult = await DB.izbrisiStranko(req.params.stranka_id)
+      res.status(200).json(queryResult);
+    } catch (err) {
+      next(err)
+    }
+  });
+
 module.exports = router;

@@ -97,6 +97,10 @@ class Database {
     ORDER BY n.narocilo_id DESC
     `, stranka_id);
   }
+
+  async izbrisiStranko(stranka_id) {
+    return this.query(`DELETE FROM Stranka WHERE stranka_id = ?`, stranka_id);
+  }
 }
 
 const db = new Database();
