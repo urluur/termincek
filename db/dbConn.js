@@ -1,4 +1,6 @@
 const mysql = require('mysql2');
+const bcrypt = require('bcrypt');
+const saltRounds = 10;
 
 class Database {
   constructor() {
@@ -33,55 +35,58 @@ class Database {
     });
   }
 
-  vseStoritve() {
+  async vseStoritve() {
     return this.query(`SELECT * FROM Storitve`);
   }
 
-  podjetjeStoritve(podjetje_id) {
+  async podjetjeStoritve(podjetje_id) {
     return this.query(`SELECT * FROM Storitve WHERE podjetje_id = ?`, podjetje_id);
   }
 
-  ustvariNarocilo(narocilo_cas, narocilo_opombe, stranka_id, delavec_id, storitev_id) {
+  async ustvariNarocilo(narocilo_cas, narocilo_opombe, stranka_id, delavec_id, storitev_id) {
     return this.query(
       `INSERT INTO Narocilo (narocilo_cas, narocilo_opombe, stranka_id, delavec_id, storitev_id) VALUES (?,?,?,?,?)`,
       [narocilo_cas, narocilo_opombe, stranka_id, delavec_id, storitev_id]
     );
   }
 
-  prekliciNarocilo(narocilo_id) {
+  async prekliciNarocilo(narocilo_id) {
     return this.query(`DELETE FROM Narocilo WHERE narocilo_id = ?`, narocilo_id);
   }
 
-  authStranka(stranka_eposta) {
-    return this.query('SELECT * FROM stranka WHERE stranka_eposta = ?', stranka_eposta);
+  async authStranka(stranka_eposta) {
+    return this.query('SELECT * FROM stranka WHERE stranka_eposta = ?', [stranka_eposta]);
   }
 
-  authDelavec(delavec_eposta) {
+  async registracijaStranka(ime, priimek, eposta, geslo, telefon) {
+    const hashedPassword = await bcrypt.hash(geslo, saltRounds);
+    return this.query(
+      `INSERT INTO Stranka (stranka_ime, stranka_priimek, stranka_eposta, stranka_geslo, stranka_telefon) VALUES (?,?,?,?,?)`,
+      [ime, priimek, eposta, hashedPassword, telefon]
+    );
+  }
+
+  async authDelavec(delavec_eposta) {
     return this.query('SELECT * FROM delavec WHERE delavec_eposta = ?', delavec_eposta);
   }
 
-  registracijaStranka(ime, priimek, eposta, geslo, telefon) {
-    return this.query(`INSERT INTO Stranka (stranka_ime,stranka_priimek,stranka_eposta,stranka_geslo,stranka_telefon) VALUES (?,?,?,?,?)`,
-      [ime, priimek, eposta, geslo, telefon]);
-  }
-
-  vsaPodjetja() {
+  async vsaPodjetja() {
     return this.query(`SELECT * FROM Podjetje`);
   }
 
-  podjetje(id) {
+  async podjetje(id) {
     return this.query(`SELECT * FROM Podjetje WHERE podjetje_id = ?`, id);
   }
 
-  vseStoritve(podjetje_id) {
+  async vseStoritve(podjetje_id) {
     return this.query(`SELECT * FROM Storitev WHERE podjetje_id = ?`, podjetje_id);
   }
 
-  vsiDelavci(podjetje_id) {
+  async vsiDelavci(podjetje_id) {
     return this.query(`SELECT * FROM Delavec WHERE podjetje_id = ?`, podjetje_id);
   }
 
-  strankaNarocila(stranka_id) {
+  async strankaNarocila(stranka_id) {
     return this.query(`
     SELECT n.*, s.*, d.delavec_ime, d.delavec_priimek, p.podjetje_naziv, p.podjetje_naslov
     FROM Narocilo n 
