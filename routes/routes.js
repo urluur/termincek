@@ -32,17 +32,17 @@ router.post('/prijava',
               if (err) {
                 console.log("SEJE NE SHRANI: " + err)
               }
-              return res.status(200).json({ stranka: queryResult[0], status: { success: true, msg: "Logged in" } })
+              return res.status(200).json({ stranka: queryResult[0], status: { success: true, msg: "Prijava uspešna" } })
             })
 
           } else {
-            res.status(200).json({ stranka: null, status: { success: false, msg: "email or password incorrect" } })
+            res.status(200).json({ stranka: null, status: { success: false, msg: "Napačni podatki" } }) // geslo ali uporabniško ime napačno
           }
         } else {
-          res.status(200).send({ stranka: null, status: { success: false, msg: "email not registered" } })
+          res.status(200).send({ stranka: null, status: { success: false, msg: "Napačni podatki" } }) // uporabnik ni registriran
         }
       } else {
-        res.status(200).send({ stranka: null, status: { success: false, msg: "Input element missing" } })
+        res.status(200).send({ stranka: null, status: { success: false, msg: "Vnesite vse podatke" } })
       }
     } catch (error) {
       next(error);
@@ -54,10 +54,10 @@ router.get('/session', (req, res, next) => {
     if (req.session.logged_in) {
       res.status(200).json(req.session.user)
     } else {
-      res.status(500).json({ stranka: null, status: { success: false, msg: "Not logged in" } })
+      res.status(401).json({ stranka: null, status: { success: false, msg: "Uporabnik ni prijavljen" } })
     }
   } catch (error) {
-    res.status(500).json({ status: { success: false, msg: "Error getting session" } })
+    res.status(500).json({ status: { success: false, msg: "Napaka pri pridobivanju seje" } })
     next(error);
   }
 });
@@ -65,9 +65,9 @@ router.get('/session', (req, res, next) => {
 router.get('/odjava', (req, res, next) => {
   try {
     req.session.destroy();
-    res.status(200).json({ status: { success: true, msg: "Logged out" } })
+    res.status(200).json({ status: { success: true, msg: "Uspešna odjava" } })
   } catch (error) {
-    res.status(500).json({ status: { success: false, msg: "Error logging out" } })
+    res.status(500).json({ status: { success: false, msg: "Napaka pri odjavi" } })
     next(error);
   }
 });
@@ -89,7 +89,7 @@ router.post('/registracija',
         req.body.telefon
       )
       res.statusCode = 200;
-      res.json({ stranka: queryResult, status: { success: true, msg: "User created" } })
+      res.json({ stranka: queryResult, status: { success: true, msg: "Uporabnik ustvarjen" } })
       res.end();
     } catch (err) {
       console.log(err)
@@ -153,17 +153,16 @@ router.get('/delavci/:podjetje_id',
     }
   });
 
-router.get('/narocila/:stranka_id',
-  param('stranka_id').isInt(),
-  validateRequest,
+router.get('/narocila/',
   async (req, res, next) => {
     try {
-      if (req.params.stranka_id != req.session.user.stranka_id) {
-        res.status(500).json({ status: { success: false, msg: "Not able to get orders for someone else" } })
-        return
+      if (req.session.logged_in) {
+        const queryResult = await DB.strankaNarocila(req.session.user.stranka_id)
+        res.status(200).json(queryResult);
       }
-      const queryResult = await DB.strankaNarocila(req.params.stranka_id)
-      res.status(200).json(queryResult);
+      else {
+        res.status(500).json({ status: { success: false, msg: "Uporabnik ni prijavljen" } })
+      }
     } catch (err) {
       next(err)
     }
@@ -178,15 +177,12 @@ router.post('/narocilo/novo',
   body('storitev_id').isInt(),
   validateRequest,
   async (req, res, next) => {
-    console.log("SEJA OB NAROCILU: " + JSON.stringify(req.session))
-    console.log(req.body.stranka_id, req.session.user.stranka_id)
     if (req.body.stranka_id != req.session.user.stranka_id) {
-      console.log("Not able to make an order for someone else")
-      res.status(500).json({ status: { success: false, msg: "Not able to make an order for someone else" } })
+      res.status(500).json({ status: { success: false, msg: "Na storitev lahko naročite le sebe" } })
       return
     }
     if (!req.session.logged_in) {
-      res.status(200).json({ status: { success: false, msg: "Not logged in" } })
+      res.status(200).json({ status: { success: false, msg: "Uporabnik ni prijavljen" } })
       return
     }
     try {
@@ -216,13 +212,17 @@ router.delete('/narocilo/preklici',
     }
   });
 
-router.delete('/stranka/:stranka_id',
-  param('stranka_id').isInt(),
-  validateRequest,
+router.delete('/stranka',
   async (req, res, next) => {
     try {
-      const queryResult = await DB.izbrisiStranko(req.params.stranka_id)
-      res.status(200).json(queryResult);
+      if (!req.session.logged_in) {
+        res.status(401).json({ status: { success: false, msg: "Uporabnik ni prijavljen" } })
+        return
+      }
+      else {
+        const queryResult = await DB.izbrisiStranko(req.session.user.stranka_id)
+        res.status(200).json(queryResult);
+      }
     } catch (err) {
       next(err)
     }

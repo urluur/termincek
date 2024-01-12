@@ -7,9 +7,9 @@ const cors = require('cors');
 require("dotenv").config();
 const app = express()
 
-app.use(cookieParser(process.env.SESSION_SECRET));
+app.use(cookieParser(process.env.COOKIE_SECRET));
 app.use(session({
-  secret: process.env.SESSION_SECRET,
+  secret: process.env.COOKIE_SECRET,
   resave: false,
   saveUninitialized: false,
   cookie: {
