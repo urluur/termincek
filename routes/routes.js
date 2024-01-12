@@ -25,15 +25,15 @@ router.post('/prijava',
         if (queryResult.length > 0 && queryResult[0].stranka_geslo) {
           const match = await bcrypt.compare(geslo, queryResult[0].stranka_geslo);
           if (match) {
-            // req.session.user = { stranka_id: queryResult[0].stranka_id, ...queryResult[0] };
-            // req.session.logged_in = true;
-            // console.log("seja ob prijavi: " + JSON.stringify(req.session) + "\n")
-            // req.session.save((err) => {
-            // if (err) {
-            // console.log("SEJE NE SHRANI: " + err)
-            // }
-            return res.status(200).json({ stranka: queryResult[0], status: { success: true, msg: "Logged in" } })
-            // })
+            req.session.user = queryResult[0];
+            req.session.logged_in = true;
+
+            req.session.save((err) => {
+              if (err) {
+                console.log("SEJE NE SHRANI: " + err)
+              }
+              return res.status(200).json({ stranka: queryResult[0], status: { success: true, msg: "Logged in" } })
+            })
 
           } else {
             res.status(200).json({ stranka: null, status: { success: false, msg: "email or password incorrect" } })
@@ -49,22 +49,22 @@ router.post('/prijava',
     }
   });
 
-// router.get('/session', (req, res, next) => {
-//   try {
-//     if (req.session.logged_in) {
-//       res.status(200).json(req.session.user)
-//     } else {
-//       res.status(500).json({ stranka: null, status: { success: false, msg: "Not logged in" } })
-//     }
-//   } catch (error) {
-//     res.status(500).json({ status: { success: false, msg: "Error getting session" } })
-//     next(error);
-//   }
-// });
+router.get('/session', (req, res, next) => {
+  try {
+    if (req.session.logged_in) {
+      res.status(200).json(req.session.user)
+    } else {
+      res.status(500).json({ stranka: null, status: { success: false, msg: "Not logged in" } })
+    }
+  } catch (error) {
+    res.status(500).json({ status: { success: false, msg: "Error getting session" } })
+    next(error);
+  }
+});
 
 router.get('/odjava', (req, res, next) => {
   try {
-    // req.session.destroy();
+    req.session.destroy();
     res.status(200).json({ status: { success: true, msg: "Logged out" } })
   } catch (error) {
     res.status(500).json({ status: { success: false, msg: "Error logging out" } })
@@ -158,6 +158,10 @@ router.get('/narocila/:stranka_id',
   validateRequest,
   async (req, res, next) => {
     try {
+      if (req.params.stranka_id != req.session.user.stranka_id) {
+        res.status(500).json({ status: { success: false, msg: "Not able to get orders for someone else" } })
+        return
+      }
       const queryResult = await DB.strankaNarocila(req.params.stranka_id)
       res.status(200).json(queryResult);
     } catch (err) {
@@ -174,17 +178,17 @@ router.post('/narocilo/novo',
   body('storitev_id').isInt(),
   validateRequest,
   async (req, res, next) => {
-    // console.log("SEJA OB NAROCILU: " + JSON.stringify(req.session))
-    // console.log(req.body.stranka_id, req.session.user.stranka_id)
-    // if (req.body.stranka_id != req.session.user.stranka_id) {
-    //   console.log("Not able to make an order for someone else")
-    //   res.status(500).json({ status: { success: false, msg: "Not able to make an order for someone else" } })
-    //   return
-    // }
-    // if (!req.session.logged_in) {
-    //   res.status(200).json({ status: { success: false, msg: "Not logged in" } })
-    //   return
-    // }
+    console.log("SEJA OB NAROCILU: " + JSON.stringify(req.session))
+    console.log(req.body.stranka_id, req.session.user.stranka_id)
+    if (req.body.stranka_id != req.session.user.stranka_id) {
+      console.log("Not able to make an order for someone else")
+      res.status(500).json({ status: { success: false, msg: "Not able to make an order for someone else" } })
+      return
+    }
+    if (!req.session.logged_in) {
+      res.status(200).json({ status: { success: false, msg: "Not logged in" } })
+      return
+    }
     try {
       const queryResult = await DB.ustvariNarocilo(
         req.body.narocilo_cas,
