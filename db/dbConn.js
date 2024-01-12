@@ -97,6 +97,19 @@ class Database {
     ORDER BY n.narocilo_id DESC
     `, stranka_id);
   }
+  async delavciNarocila(delavec_id) {
+    return this.query(`
+    SELECT Narocilo.*, Storitev.*, Stranka.stranka_ime, Stranka.stranka_priimek, Stranka.stranka_telefon, Stranka.stranka_eposta
+    FROM Narocilo
+    JOIN Storitev ON Narocilo.storitev_id = Storitev.storitev_id
+    JOIN Stranka ON Narocilo.stranka_id = Stranka.stranka_id
+    JOIN Podjetje ON Storitev.podjetje_id = Podjetje.podjetje_id
+    WHERE Narocilo.delavec_id = ?
+    ORDER BY Narocilo.narocilo_id DESC
+    `, delavec_id);
+  }
+
+
 
   async izbrisiStranko(stranka_id) {
     return this.query(`DELETE FROM Stranka WHERE stranka_id = ?`, stranka_id);
