@@ -70,26 +70,24 @@ class Database {
     return this.query('SELECT * FROM delavec WHERE delavec_eposta = ?', delavec_eposta);
   }
 
-  // TODO: registracija delavca
-  async registracijaDelavec(podjetje_id, ime, priimek, slika, eposta, geslo, telefon) {
-    const hashedPassword = await bcrypt.hash(geslo, saltRounds);
+  async registracijaDelavec(delavec_ime, delavec_priimek, delavec_slika, delavec_eposta, delavec_geslo, delavec_telefon, podjetje_id) {
+    const hashedPassword = await bcrypt.hash(delavec_geslo, saltRounds);
     return this.query(
       `INSERT INTO Delavec (delavec_ime, delavec_priimek, delavec_slika, delavec_eposta, delavec_geslo, delavec_telefon, podjetje_id) VALUES (?,?,?,?,?,?,?)`,
-      [ime, priimek, slika, eposta, hashedPassword, telefon, podjetje_id]
+      [delavec_ime, delavec_priimek, delavec_slika, delavec_eposta, hashedPassword, delavec_telefon, podjetje_id]
+    );
+  }
+
+  async registracijaPodjetje(naziv, admin, geslo, naslov, slika) {
+    const hashedPassword = await bcrypt.hash(geslo, saltRounds);
+    return this.query(
+      `INSERT INTO Podjetje (podjetje_naziv, podjetje_admin, podjetje_geslo, podjetje_naslov, podjetje_slika) VALUES (?,?,?,?,?)`,
+      [naziv, admin, hashedPassword, naslov, slika]
     );
   }
 
   async authPodjetje(podjetje_admin) {
     return this.query('SELECT * FROM podjetje WHERE podjetje_admin = ?', podjetje_admin);
-  }
-
-  // TODO: registracija podjetja
-  async registracijaPodjetje(naziv, admin, geslo, naslov, slika) {
-    const hashedPassword = await bcrypt.hash(geslo, saltRounds);
-    return this.query(
-      `INSERT INTO Podjetje (podjetje_naziv, podjetje_admin, podjetje_geslo, podjetje_naslov, podjetje_slika) VALUES ()`,
-      [naziv, admin, hashedPassword, naslov, slika]
-    );
   }
 
   async vsaPodjetja() {

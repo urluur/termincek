@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const DB = require('../db/dbConn');
 const bcrypt = require('bcrypt');
-const { body, validationResult, param } = require('express-validator');
+const { body, validationResult } = require('express-validator');
 
 const validateRequest = (req, res, next) => {
   const errors = validationResult(req);
@@ -58,8 +58,7 @@ router.post('/delavec/prijava',
       if (eposta && geslo) {
         const queryResult = await DB.authDelavec(eposta)
         if (queryResult.length > 0 && queryResult[0].delavec_geslo) {
-          // const match = await bcrypt.compare(geslo, queryResult[0].delavec_geslo); // TODO: ko bo registracija delavca
-          const match = (geslo === queryResult[0].delavec_geslo);
+          const match = await bcrypt.compare(geslo, queryResult[0].delavec_geslo);
           if (match) {
             req.session.user = queryResult[0];
             req.session.logged_in = true;
@@ -95,8 +94,7 @@ router.post('/admin/prijava',
       if (uporabnisko && geslo) {
         const queryResult = await DB.authPodjetje(uporabnisko)
         if (queryResult.length > 0 && queryResult[0].podjetje_geslo) {
-          // const match = await bcrypt.compare(geslo, queryResult[0].podjetje_geslo); // TODO: ko bo registracija podjetja
-          const match = (geslo === queryResult[0].podjetje_geslo);
+          const match = await bcrypt.compare(geslo, queryResult[0].podjetje_geslo);
           if (match) {
             req.session.admin = queryResult[0];
             req.session.is_admin = true;
@@ -137,7 +135,7 @@ router.post('/registracija',
   body('priimek').notEmpty(),
   body('eposta').isEmail(),
   body('geslo').isLength({ min: 8 }),
-  body('telefon').isMobilePhone(),
+  body('telefon').notEmpty(),
   validateRequest,
   async (req, res, next) => {
     try {
@@ -152,19 +150,39 @@ router.post('/registracija',
   });
 
 router.post('/delavec/registracija',
-  body('ime').notEmpty(),
-  body('priimek').notEmpty(),
-  body('eposta').isEmail(),
-  body('geslo').isLength({ min: 8 }),
-  body('telefon').isMobilePhone(),
-  body('slika').notEmpty(),
+  body('delavec_ime').notEmpty(),
+  body('delavec_priimek').notEmpty(),
+  body('delavec_slika').notEmpty(),
+  body('delavec_eposta').isEmail(),
+  body('delavec_geslo').isLength({ min: 8 }),
+  body('delavec_telefon').notEmpty(),
   body('podjetje_id').isInt(),
   validateRequest,
   async (req, res, next) => {
     try {
-      const { podjetje_id, ime, priimek, slika, eposta, geslo, telefon } = req.body;
-      const queryResult = await DB.registracijaDelavec(podjetje_id, ime, priimek, slika, eposta, geslo, telefon);
+      const { delavec_ime, delavec_priimek, delavec_slika, delavec_eposta, delavec_geslo, delavec_telefon, podjetje_id } = req.body;
+      const queryResult = await DB.registracijaDelavec(delavec_ime, delavec_priimek, delavec_slika, delavec_eposta, delavec_geslo, delavec_telefon, podjetje_id);
       res.status(200).json({ delavec: queryResult, status: { success: true, msg: "Delavec ustvarjen" } });
+    } catch (err) {
+      console.log(err)
+      res.sendStatus(500)
+      next()
+    }
+  });
+
+router.post('/podjetje/registracija',
+  body('podjetje_naziv').notEmpty(),
+  body('podjetje_admin').notEmpty(),
+  body('podjetje_geslo').isLength({ min: 8 }),
+  body('podjetje_naslov').notEmpty(),
+  body('podjetje_slika').notEmpty(),
+  validateRequest,
+  async (req, res, next) => {
+    try {
+      const { podjetje_naziv, podjetje_admin, podjetje_geslo, podjetje_naslov, podjetje_slika } = req.body;
+
+      const queryResult = await DB.registracijaPodjetje(podjetje_naziv, podjetje_admin, podjetje_geslo, podjetje_naslov, podjetje_slika);
+      res.status(200).json({ podjetje: queryResult, status: { success: true, msg: "Podjetje ustvarjeno" } });
     } catch (err) {
       console.log(err)
       res.sendStatus(500)
