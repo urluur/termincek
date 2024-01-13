@@ -12,7 +12,6 @@ const validateRequest = (req, res, next) => {
   next();
 };
 
-
 router.post('/prijava',
   body('eposta').isEmail(),
   body('geslo').isString(),
@@ -49,7 +48,7 @@ router.post('/prijava',
     }
   });
 
-router.post('/admin/prijava',
+router.post('/delavec/prijava',
   body('eposta').isEmail(),
   body('geslo').isString(),
   validateRequest,
@@ -86,6 +85,43 @@ router.post('/admin/prijava',
     }
   });
 
+router.post('/admin/prijava',
+  body('uporabnisko').isString(),
+  body('geslo').isString(),
+  validateRequest,
+  async (req, res, next) => {
+    try {
+      const { uporabnisko, geslo } = req.body;
+      if (uporabnisko && geslo) {
+        const queryResult = await DB.authPodjetje(uporabnisko)
+        if (queryResult.length > 0 && queryResult[0].podjetje_geslo) {
+          // const match = await bcrypt.compare(geslo, queryResult[0].podjetje_geslo); // TODO: ko bo registracija podjetja
+          const match = (geslo === queryResult[0].podjetje_geslo);
+          if (match) {
+            req.session.admin = queryResult[0];
+            req.session.is_admin = true;
+
+            req.session.save((err) => {
+              if (err) {
+                console.log("SEJE NE SHRANI: " + err)
+              }
+              return res.status(200).json({ podjetje: queryResult[0], status: { success: true, msg: "Prijava uspešna" } })
+            })
+
+          } else {
+            res.status(200).json({ podjetje: null, status: { success: false, msg: "Napačni podatki" } }) // geslo ali uporabniško ime napačno
+          }
+        } else {
+          res.status(200).send({ podjetje: null, status: { success: false, msg: "Napačni podatki" } }) // uporabnik ni registriran
+        }
+      } else {
+        res.status(200).send({ podjetje: null, status: { success: false, msg: "Vnesite vse podatke" } })
+      }
+    } catch (error) {
+      next(error);
+    }
+  });
+
 router.get('/odjava', (req, res, next) => {
   try {
     req.session.destroy();
@@ -105,16 +141,9 @@ router.post('/registracija',
   validateRequest,
   async (req, res, next) => {
     try {
-      const queryResult = await DB.registracijaStranka(
-        req.body.ime,
-        req.body.priimek,
-        req.body.eposta,
-        req.body.geslo,
-        req.body.telefon
-      )
-      res.statusCode = 200;
-      res.json({ stranka: queryResult, status: { success: true, msg: "Uporabnik ustvarjen" } })
-      res.end();
+      const { ime, priimek, eposta, geslo, telefon } = req.body;
+      const queryResult = await DB.registracijaStranka(ime, priimek, eposta, geslo, telefon);
+      res.status(200).json({ stranka: queryResult, status: { success: true, msg: "Stranka ustvarjena" } });
     } catch (err) {
       console.log(err)
       res.sendStatus(500)
@@ -122,5 +151,25 @@ router.post('/registracija',
     }
   });
 
+router.post('/delavec/registracija',
+  body('ime').notEmpty(),
+  body('priimek').notEmpty(),
+  body('eposta').isEmail(),
+  body('geslo').isLength({ min: 8 }),
+  body('telefon').isMobilePhone(),
+  body('slika').notEmpty(),
+  body('podjetje_id').isInt(),
+  validateRequest,
+  async (req, res, next) => {
+    try {
+      const { podjetje_id, ime, priimek, slika, eposta, geslo, telefon } = req.body;
+      const queryResult = await DB.registracijaDelavec(podjetje_id, ime, priimek, slika, eposta, geslo, telefon);
+      res.status(200).json({ delavec: queryResult, status: { success: true, msg: "Delavec ustvarjen" } });
+    } catch (err) {
+      console.log(err)
+      res.sendStatus(500)
+      next()
+    }
+  });
 
 module.exports = router;

@@ -80,7 +80,7 @@ router.get('/delavci/:podjetje_id',
     }
   });
 
-router.get('/narocila',
+router.get('/stranka/narocila',
   async (req, res, next) => {
     try {
       if (req.session.logged_in) {
@@ -101,8 +101,6 @@ router.get('/delavec/narocila',
     try {
       if (req.session.logged_in) {
         const queryResult = await DB.delavciNarocila(req.session.user.delavec_id)
-        console.log(queryResult)
-        console.log(queryResult)
         res.status(200).json(queryResult);
       }
       else {
@@ -169,6 +167,28 @@ router.delete('/stranka',
         const queryResult = await DB.izbrisiStranko(req.session.user.stranka_id)
         res.status(200).json(queryResult);
       }
+    } catch (err) {
+      next(err)
+    }
+  });
+
+// TODO: admin lahko brise delavce ki so pri istem podjetju
+router.delete('/delavec',
+  async (req, res, next) => {
+    try {
+      const queryResult = await DB.izbrisiDelavca(req.body.target_delavec_id)
+      res.status(200).json(queryResult);
+    } catch (err) {
+      next(err)
+    }
+  });
+
+// TODO: admin lahko brise podjetje samo ce je v istem podjetju
+router.delete('/podjetje',
+  async (req, res, next) => {
+    try {
+      const queryResult = await DB.izbrisiPodjetje(req.body.target_podjetje_id)
+      res.status(200).json(queryResult);
     } catch (err) {
       next(err)
     }

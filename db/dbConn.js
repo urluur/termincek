@@ -70,6 +70,28 @@ class Database {
     return this.query('SELECT * FROM delavec WHERE delavec_eposta = ?', delavec_eposta);
   }
 
+  // TODO: registracija delavca
+  async registracijaDelavec(podjetje_id, ime, priimek, slika, eposta, geslo, telefon) {
+    const hashedPassword = await bcrypt.hash(geslo, saltRounds);
+    return this.query(
+      `INSERT INTO Delavec (delavec_ime, delavec_priimek, delavec_slika, delavec_eposta, delavec_geslo, delavec_telefon, podjetje_id) VALUES (?,?,?,?,?,?,?)`,
+      [ime, priimek, slika, eposta, hashedPassword, telefon, podjetje_id]
+    );
+  }
+
+  async authPodjetje(podjetje_admin) {
+    return this.query('SELECT * FROM podjetje WHERE podjetje_admin = ?', podjetje_admin);
+  }
+
+  // TODO: registracija podjetja
+  async registracijaPodjetje(naziv, admin, geslo, naslov, slika) {
+    const hashedPassword = await bcrypt.hash(geslo, saltRounds);
+    return this.query(
+      `INSERT INTO Podjetje (podjetje_naziv, podjetje_admin, podjetje_geslo, podjetje_naslov, podjetje_slika) VALUES ()`,
+      [naziv, admin, hashedPassword, naslov, slika]
+    );
+  }
+
   async vsaPodjetja() {
     return this.query(`SELECT * FROM Podjetje`);
   }
@@ -109,11 +131,18 @@ class Database {
     `, delavec_id);
   }
 
-
-
   async izbrisiStranko(stranka_id) {
     return this.query(`DELETE FROM Stranka WHERE stranka_id = ?`, stranka_id);
   }
+
+  async izbrisiDelavca(delavec_id) {
+    return this.query(`DELETE FROM Delavec WHERE delavec_id = ?`, delavec_id);
+  }
+
+  async izbrisiPodjetje(podjetje_id) {
+    return this.query(`DELETE FROM Podjetje WHERE podjetje_id = ?`, podjetje_id);
+  }
+
 }
 
 const db = new Database();
