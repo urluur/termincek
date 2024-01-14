@@ -141,6 +141,24 @@ class Database {
     return this.query(`DELETE FROM Podjetje WHERE podjetje_id = ?`, podjetje_id);
   }
 
+  async izbrisiStoritev(storitev_id) {
+    return this.query(`DELETE FROM Storitev WHERE storitev_id = ?`, storitev_id);
+  }
+
+  async ustvariStoritev(ime, opis, slika, cena, trajanje, podjetje_id) {
+    return this.query(
+      `INSERT INTO Storitev (storitev_ime, storitev_opis, storitev_slika, storitev_cena, storitev_trajanje, podjetje_id) VALUES (?,?,?,?,?,?)`,
+      [ime, opis, slika, cena, trajanje, podjetje_id]
+    );
+  }
+
+  async urediStoritev(id, ime, opis, slika, cena, trajanje) {
+    return this.query(
+      `UPDATE Storitev SET storitev_ime = ?, storitev_opis = ?, storitev_slika = ?, storitev_cena = ?, storitev_trajanje = ? WHERE storitev_id = ?`,
+      [ime, opis, slika, cena, trajanje, id]
+    );
+  }
+
 }
 
 const db = new Database();

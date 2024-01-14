@@ -6,6 +6,7 @@ const { body, validationResult, param } = require('express-validator');
 const validateRequest = (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
+    console.log(errors.array())
     return res.status(400).json({ errors: errors.array() });
   }
   next();
@@ -187,6 +188,69 @@ router.delete('/podjetje',
   async (req, res, next) => {
     try {
       const queryResult = await DB.izbrisiPodjetje(req.body.target_podjetje_id)
+      res.status(200).json(queryResult);
+    } catch (err) {
+      next(err)
+    }
+  });
+
+
+// TODO: admin lahko brise storitev samo ce je v istem podjetju
+router.delete('/storitev/:storitev_id',
+  param('storitev_id').isInt(),
+  validateRequest,
+  async (req, res, next) => {
+    try {
+      const queryResult = await DB.izbrisiStoritev(req.params.storitev_id)
+      res.status(200).json(queryResult);
+    } catch (err) {
+      next(err)
+    }
+  });
+
+router.post('/storitev/nova',
+  body('storitev_ime').isString(),
+  body('storitev_opis').isString(),
+  body('storitev_slika').isString(),
+  body('storitev_cena').isFloat(),
+  body('storitev_trajanje').isInt(),
+  body('podjetje_id').isInt(),
+  validateRequest,
+  async (req, res, next) => {
+    try {
+      const queryResult = await DB.ustvariStoritev(
+        req.body.storitev_ime,
+        req.body.storitev_opis,
+        req.body.storitev_slika,
+        req.body.storitev_cena,
+        req.body.storitev_trajanje,
+        req.body.podjetje_id
+      )
+      res.status(200).json(queryResult);
+    } catch (err) {
+      next(err)
+    }
+  });
+
+router.post('/storitev/uredi/:storitev_id',
+  param('storitev_id').isInt(),
+  body('storitev_ime').isString(),
+  body('storitev_opis').isString(),
+  body('storitev_slika').isString(),
+  body('storitev_cena').isFloat(),
+  body('storitev_trajanje').isInt(),
+  body('podjetje_id').isInt(),
+  validateRequest,
+  async (req, res, next) => {
+    try {
+      const queryResult = await DB.urediStoritev(
+        req.params.storitev_id,
+        req.body.storitev_ime,
+        req.body.storitev_opis,
+        req.body.storitev_slika,
+        req.body.storitev_cena,
+        req.body.storitev_trajanje
+      )
       res.status(200).json(queryResult);
     } catch (err) {
       next(err)
