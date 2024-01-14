@@ -32,6 +32,7 @@ app.use(bodyParser.json());
 const db = require('./db/dbConn');
 
 app.use('/', require('./routes/routes'));
+app.use('/auth', require('./routes/auth'));
 
 app.listen(process.env.PORT, () => {
   console.log('Server is running on port: ' + process.env.PORT);

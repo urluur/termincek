@@ -1,53 +1,16 @@
 const express = require('express');
 const router = express.Router();
 const DB = require('../db/dbConn');
-const bcrypt = require('bcrypt');
 const { body, validationResult, param } = require('express-validator');
 
 const validateRequest = (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
+    console.log(errors.array())
     return res.status(400).json({ errors: errors.array() });
   }
   next();
 };
-
-
-router.post('/prijava',
-  body('eposta').isEmail(),
-  body('geslo').isString(),
-  validateRequest,
-  async (req, res, next) => {
-    try {
-      const { eposta, geslo } = req.body;
-      if (eposta && geslo) {
-        const queryResult = await DB.authStranka(eposta)
-        if (queryResult.length > 0 && queryResult[0].stranka_geslo) {
-          const match = await bcrypt.compare(geslo, queryResult[0].stranka_geslo);
-          if (match) {
-            req.session.user = queryResult[0];
-            req.session.logged_in = true;
-
-            req.session.save((err) => {
-              if (err) {
-                console.log("SEJE NE SHRANI: " + err)
-              }
-              return res.status(200).json({ stranka: queryResult[0], status: { success: true, msg: "Prijava uspešna" } })
-            })
-
-          } else {
-            res.status(200).json({ stranka: null, status: { success: false, msg: "Napačni podatki" } }) // geslo ali uporabniško ime napačno
-          }
-        } else {
-          res.status(200).send({ stranka: null, status: { success: false, msg: "Napačni podatki" } }) // uporabnik ni registriran
-        }
-      } else {
-        res.status(200).send({ stranka: null, status: { success: false, msg: "Vnesite vse podatke" } })
-      }
-    } catch (error) {
-      next(error);
-    }
-  });
 
 router.get('/session', (req, res, next) => {
   try {
@@ -62,42 +25,6 @@ router.get('/session', (req, res, next) => {
   }
 });
 
-router.get('/odjava', (req, res, next) => {
-  try {
-    req.session.destroy();
-    res.status(200).json({ status: { success: true, msg: "Uspešna odjava" } })
-  } catch (error) {
-    res.status(500).json({ status: { success: false, msg: "Napaka pri odjavi" } })
-    next(error);
-  }
-});
-
-router.post('/registracija',
-  body('ime').notEmpty(),
-  body('priimek').notEmpty(),
-  body('eposta').isEmail(),
-  body('geslo').isLength({ min: 8 }),
-  body('telefon').isMobilePhone(),
-  validateRequest,
-  async (req, res, next) => {
-    try {
-      const queryResult = await DB.registracijaStranka(
-        req.body.ime,
-        req.body.priimek,
-        req.body.eposta,
-        req.body.geslo,
-        req.body.telefon
-      )
-      res.statusCode = 200;
-      res.json({ stranka: queryResult, status: { success: true, msg: "Uporabnik ustvarjen" } })
-      res.end();
-    } catch (err) {
-      console.log(err)
-      res.sendStatus(500)
-      next()
-    }
-  });
-
 router.get('/podjetja', async (req, res, next) => {
   try {
     const queryResult = await DB.vsaPodjetja()
@@ -111,7 +38,7 @@ router.get('/podjetja', async (req, res, next) => {
   }
 });
 
-router.get('/podjetje/:podjetje_id',
+router.get('/podjetja/:podjetje_id',
   param('podjetje_id').isInt(),
   validateRequest,
   async (req, res, next) => {
@@ -153,11 +80,27 @@ router.get('/delavci/:podjetje_id',
     }
   });
 
-router.get('/narocila/',
+router.get('/stranka/narocila',
   async (req, res, next) => {
     try {
       if (req.session.logged_in) {
         const queryResult = await DB.strankaNarocila(req.session.user.stranka_id)
+        res.status(200).json(queryResult);
+      }
+      else {
+        res.status(500).json({ status: { success: false, msg: "Uporabnik ni prijavljen" } })
+      }
+    } catch (err) {
+      next(err)
+    }
+  }
+);
+
+router.get('/delavec/narocila',
+  async (req, res, next) => {
+    try {
+      if (req.session.logged_in) {
+        const queryResult = await DB.delavciNarocila(req.session.user.delavec_id)
         res.status(200).json(queryResult);
       }
       else {
@@ -199,6 +142,7 @@ router.post('/narocilo/novo',
     }
   });
 
+// TODO: za delavca in stranko posebej
 router.delete('/narocilo/preklici',
   body('narocilo_id').isInt(),
   validateRequest,
@@ -223,6 +167,91 @@ router.delete('/stranka',
         const queryResult = await DB.izbrisiStranko(req.session.user.stranka_id)
         res.status(200).json(queryResult);
       }
+    } catch (err) {
+      next(err)
+    }
+  });
+
+// TODO: admin lahko brise delavce ki so pri istem podjetju
+router.delete('/delavec',
+  async (req, res, next) => {
+    try {
+      const queryResult = await DB.izbrisiDelavca(req.body.target_delavec_id)
+      res.status(200).json(queryResult);
+    } catch (err) {
+      next(err)
+    }
+  });
+
+// TODO: admin lahko brise podjetje samo ce je v istem podjetju
+router.delete('/podjetje',
+  async (req, res, next) => {
+    try {
+      const queryResult = await DB.izbrisiPodjetje(req.body.target_podjetje_id)
+      res.status(200).json(queryResult);
+    } catch (err) {
+      next(err)
+    }
+  });
+
+
+// TODO: admin lahko brise storitev samo ce je v istem podjetju
+router.delete('/storitev/:storitev_id',
+  param('storitev_id').isInt(),
+  validateRequest,
+  async (req, res, next) => {
+    try {
+      const queryResult = await DB.izbrisiStoritev(req.params.storitev_id)
+      res.status(200).json(queryResult);
+    } catch (err) {
+      next(err)
+    }
+  });
+
+router.post('/storitev/nova',
+  body('storitev_ime').isString(),
+  body('storitev_opis').isString(),
+  body('storitev_slika').isString(),
+  body('storitev_cena').isFloat(),
+  body('storitev_trajanje').isInt(),
+  body('podjetje_id').isInt(),
+  validateRequest,
+  async (req, res, next) => {
+    try {
+      const queryResult = await DB.ustvariStoritev(
+        req.body.storitev_ime,
+        req.body.storitev_opis,
+        req.body.storitev_slika,
+        req.body.storitev_cena,
+        req.body.storitev_trajanje,
+        req.body.podjetje_id
+      )
+      res.status(200).json(queryResult);
+    } catch (err) {
+      next(err)
+    }
+  });
+
+router.post('/storitev/uredi/:storitev_id',
+  param('storitev_id').isInt(),
+  body('storitev_ime').isString(),
+  body('storitev_opis').isString(),
+  body('storitev_slika').isString(),
+  body('storitev_cena').isFloat(),
+  body('storitev_trajanje').isInt(),
+  body('podjetje_id').isInt(),
+  validateRequest,
+  async (req, res, next) => {
+    try {
+      const queryResult = await DB.urediStoritev(
+        req.params.storitev_id,
+        req.body.storitev_ime,
+        req.body.storitev_opis,
+        req.body.storitev_slika,
+        req.body.storitev_cena,
+        req.body.storitev_trajanje
+      )
+      res.status(200).json(queryResult);
     } catch (err) {
       next(err)
     }

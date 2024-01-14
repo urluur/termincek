@@ -70,6 +70,26 @@ class Database {
     return this.query('SELECT * FROM delavec WHERE delavec_eposta = ?', delavec_eposta);
   }
 
+  async registracijaDelavec(delavec_ime, delavec_priimek, delavec_slika, delavec_eposta, delavec_geslo, delavec_telefon, podjetje_id) {
+    const hashedPassword = await bcrypt.hash(delavec_geslo, saltRounds);
+    return this.query(
+      `INSERT INTO Delavec (delavec_ime, delavec_priimek, delavec_slika, delavec_eposta, delavec_geslo, delavec_telefon, podjetje_id) VALUES (?,?,?,?,?,?,?)`,
+      [delavec_ime, delavec_priimek, delavec_slika, delavec_eposta, hashedPassword, delavec_telefon, podjetje_id]
+    );
+  }
+
+  async registracijaPodjetje(naziv, admin, geslo, naslov, slika) {
+    const hashedPassword = await bcrypt.hash(geslo, saltRounds);
+    return this.query(
+      `INSERT INTO Podjetje (podjetje_naziv, podjetje_admin, podjetje_geslo, podjetje_naslov, podjetje_slika) VALUES (?,?,?,?,?)`,
+      [naziv, admin, hashedPassword, naslov, slika]
+    );
+  }
+
+  async authPodjetje(podjetje_admin) {
+    return this.query('SELECT * FROM podjetje WHERE podjetje_admin = ?', podjetje_admin);
+  }
+
   async vsaPodjetja() {
     return this.query(`SELECT * FROM Podjetje`);
   }
@@ -97,10 +117,48 @@ class Database {
     ORDER BY n.narocilo_id DESC
     `, stranka_id);
   }
+  async delavciNarocila(delavec_id) {
+    return this.query(`
+    SELECT Narocilo.*, Storitev.*, Stranka.stranka_ime, Stranka.stranka_priimek, Stranka.stranka_telefon, Stranka.stranka_eposta
+    FROM Narocilo
+    JOIN Storitev ON Narocilo.storitev_id = Storitev.storitev_id
+    JOIN Stranka ON Narocilo.stranka_id = Stranka.stranka_id
+    JOIN Podjetje ON Storitev.podjetje_id = Podjetje.podjetje_id
+    WHERE Narocilo.delavec_id = ?
+    ORDER BY Narocilo.narocilo_id DESC
+    `, delavec_id);
+  }
 
   async izbrisiStranko(stranka_id) {
     return this.query(`DELETE FROM Stranka WHERE stranka_id = ?`, stranka_id);
   }
+
+  async izbrisiDelavca(delavec_id) {
+    return this.query(`DELETE FROM Delavec WHERE delavec_id = ?`, delavec_id);
+  }
+
+  async izbrisiPodjetje(podjetje_id) {
+    return this.query(`DELETE FROM Podjetje WHERE podjetje_id = ?`, podjetje_id);
+  }
+
+  async izbrisiStoritev(storitev_id) {
+    return this.query(`DELETE FROM Storitev WHERE storitev_id = ?`, storitev_id);
+  }
+
+  async ustvariStoritev(ime, opis, slika, cena, trajanje, podjetje_id) {
+    return this.query(
+      `INSERT INTO Storitev (storitev_ime, storitev_opis, storitev_slika, storitev_cena, storitev_trajanje, podjetje_id) VALUES (?,?,?,?,?,?)`,
+      [ime, opis, slika, cena, trajanje, podjetje_id]
+    );
+  }
+
+  async urediStoritev(id, ime, opis, slika, cena, trajanje) {
+    return this.query(
+      `UPDATE Storitev SET storitev_ime = ?, storitev_opis = ?, storitev_slika = ?, storitev_cena = ?, storitev_trajanje = ? WHERE storitev_id = ?`,
+      [ime, opis, slika, cena, trajanje, id]
+    );
+  }
+
 }
 
 const db = new Database();
