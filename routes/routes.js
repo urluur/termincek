@@ -257,4 +257,111 @@ router.post('/storitev/uredi/:storitev_id',
     }
   });
 
+
+function razlikaMedCasoma(zacetni, koncni) {
+  const zacetneUre = parseInt(zacetni.split(':')[0]);
+  const zacetniMinute = parseInt(zacetni.split(':')[1]);
+  const koncneUre = parseInt(koncni.split(':')[0]);
+  const koncneMinute = parseInt(koncni.split(':')[1]);
+
+  return (koncneUre * 60 + koncneMinute) - (zacetneUre * 60 + zacetniMinute);
+}
+
+function pristejMinute(cas, minute) {
+  const ure = parseInt(cas.split(':')[0]);
+  const minute = parseInt(cas.split(':')[1]);
+
+  const skupnoMinute = ure * 60 + minute + minute;
+  const noveUre = Math.floor(skupnoMinute / 60);
+  const noveMinute = skupnoMinute % 60;
+
+  return `${noveUre.toString().padStart(2, '0')}:${noveMinute.toString().padStart(2, '0')}`;
+}
+
+router.post('/urnik', async (req, res, next) => {
+  try {
+    // TODO: najprej zbrisi urnik
+    const urnik = req.body.workHours;
+    const delavec_id = req.session.user.delavec_id;
+
+    const premor_storitve = [
+      { id: 1, duration: 1440 },
+      { id: 2, duration: 720 },
+      { id: 3, duration: 360 },
+      { id: 4, duration: 180 },
+      { id: 5, duration: 60 },
+      { id: 6, duration: 30 },
+      { id: 7, duration: 15 }
+    ]
+
+    for (let dan in urnik) {
+      // sortiraj da je prej zacetek
+      urnik[dan].sort((a, b) => a.start.localeCompare(b.start));
+
+      let prosto_zacetek = '00:00';
+
+      for (let i = 0; i < urnik[dan].length; i++) {
+        // zracunaj konec prostega casa
+        let prosto_konec = urnik[dan][i].start;
+
+        // napolni kjer je prosto z narocili
+        let preostane_minut = razlikaMedCasoma(prosto_zacetek, prosto_konec);
+        for (const storitev of premor_storitve) {
+          while (storitev.duration <= preostane_minut) {
+            await createNarocilo(dan, prosto_zacetek, prosto_konec, delavec_id, storitev.id);
+            prosto_zacetek = pristejMinute(prosto_zacetek, storitev.duration);
+            preostane_minut -= storitev.duration;
+          }
+        }
+
+        // zacetek naslednjega prostega časa je konec tega
+        prosto_zacetek = urnik[dan][i].end;
+      }
+
+      // Zafilaj po delovniku
+      let prosto_konec = '24:00';
+      let preostane_minut = razlikaMedCasoma(prosto_zacetek, prosto_konec);
+      for (const premor of premor_storitve) {
+        while (premor.duration <= preostane_minut) {
+          await createNarocilo(dan, prosto_zacetek, prosto_konec, delavec_id, premor.id);
+          prosto_zacetek = pristejMinute(prosto_zacetek, premor.duration);
+          preostane_minut -= premor.duration;
+        }
+      }
+    }
+
+    res.status(200).send('Schedule created successfully');
+
+  } catch (err) {
+    next(err);
+  }
+});
+
+async function createNarocilo(day, freeTimeStart, freeTimeEnd, delavec_id) {
+  // zracunaj kolko casa je fraj
+  const dolzina_prostega_casa = (new Date(`1970-01-01T${freeTimeEnd}:00Z`) - new Date(`1970-01-01T${freeTimeStart}:00Z`)) / 60000;
+
+  // odloci se kera premor storitev ni prevelika
+  let storitev_id;
+  if (dolzina_prostega_casa >= (1440 - 1)) storitev_id = 1;
+  else if (dolzina_prostega_casa >= (720 - 1)) storitev_id = 2;
+  else if (dolzina_prostega_casa >= (360 - 1)) storitev_id = 3;
+  else if (dolzina_prostega_casa >= (180 - 1)) storitev_id = 4;
+  else if (dolzina_prostega_casa >= (60 - 1)) storitev_id = 5;
+  else if (dolzina_prostega_casa >= (30 - 1)) storitev_id = 6;
+  else if (dolzina_prostega_casa >= (15 - 1)) storitev_id = 7;
+
+  const narocilo = {
+    stranka_eposta: `${day}`,
+    narocilo_cas: `${freeTimeStart}`, // popravi iz casa v datum?
+    stranka_id: day,
+    delavec_id: delavec_id,
+    storitev_id: storitev_id
+  };
+
+  // const queryResult = await DB.novNarocilo(narocilo);
+  console.log(narocilo);
+}
+
+
 module.exports = router;

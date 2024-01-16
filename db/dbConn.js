@@ -91,7 +91,7 @@ class Database {
   }
 
   async vsaPodjetja() {
-    return this.query(`SELECT * FROM Podjetje`);
+    return this.query(`SELECT * FROM Podjetje WHERE podjetje_id != 0`);
   }
 
   async podjetje(id) {
@@ -158,6 +158,8 @@ class Database {
       [ime, opis, slika, cena, trajanje, id]
     );
   }
+
+
 
 }
 
