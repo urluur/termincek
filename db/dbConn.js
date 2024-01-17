@@ -159,8 +159,16 @@ class Database {
     );
   }
 
+  async urnikNarocilo(narocilo) {
+    return this.query(
+      `INSERT INTO Narocilo (narocilo_cas, stranka_id, delavec_id, storitev_id) VALUES (?,?,?,?)`,
+      [narocilo.narocilo_cas, narocilo.stranka_id, narocilo.delavec_id, narocilo.storitev_id]
+    );
+  }
 
-
+  async izbrisiUrnik(delavec_id) {
+    return this.query(`DELETE FROM Narocilo WHERE delavec_id = ? AND stranka_id BETWEEN 0 AND 6`, delavec_id);
+  }
 }
 
 const db = new Database();

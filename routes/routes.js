@@ -267,11 +267,11 @@ function razlikaMedCasoma(zacetni, koncni) {
   return (koncneUre * 60 + koncneMinute) - (zacetneUre * 60 + zacetniMinute);
 }
 
-function pristejMinute(cas, minute) {
+function pristejMinute(cas, dodatne_minute) {
   const ure = parseInt(cas.split(':')[0]);
   const minute = parseInt(cas.split(':')[1]);
 
-  const skupnoMinute = ure * 60 + minute + minute;
+  const skupnoMinute = ure * 60 + minute + dodatne_minute;
   const noveUre = Math.floor(skupnoMinute / 60);
   const noveMinute = skupnoMinute % 60;
 
@@ -280,9 +280,16 @@ function pristejMinute(cas, minute) {
 
 router.post('/urnik', async (req, res, next) => {
   try {
-    // TODO: najprej zbrisi urnik
-    const urnik = req.body.workHours;
     const delavec_id = req.session.user.delavec_id;
+    if (!delavec_id) {
+      return res.status(401).send('User is not a worker');
+    }
+    const deleteQueryResult = await DB.izbrisiUrnik(req.session.user.delavec_id);
+    if (deleteQueryResult.serverStatus !== 2) {
+      return res.status(500).send('Error deleting schedule');
+    }
+
+    const urnik = req.body.workHours;
 
     const premor_storitve = [
       { id: 1, duration: 1440 },
@@ -337,9 +344,9 @@ router.post('/urnik', async (req, res, next) => {
   }
 });
 
-async function createNarocilo(day, freeTimeStart, freeTimeEnd, delavec_id) {
+async function createNarocilo(dan, prosto_zacetek, prosto_konec, delavec_id) {
   // zracunaj kolko casa je fraj
-  const dolzina_prostega_casa = (new Date(`1970-01-01T${freeTimeEnd}:00Z`) - new Date(`1970-01-01T${freeTimeStart}:00Z`)) / 60000;
+  const dolzina_prostega_casa = (new Date(`1970-01-01T${prosto_konec}:00Z`) - new Date(`1970-01-01T${prosto_zacetek}:00Z`)) / 60000;
 
   // odloci se kera premor storitev ni prevelika
   let storitev_id;
@@ -351,17 +358,45 @@ async function createNarocilo(day, freeTimeStart, freeTimeEnd, delavec_id) {
   else if (dolzina_prostega_casa >= (30 - 1)) storitev_id = 6;
   else if (dolzina_prostega_casa >= (15 - 1)) storitev_id = 7;
 
+  let stranka_id;
+  switch (dan) {
+    case 'pon':
+      stranka_id = 0
+      break;
+    case 'tor':
+      stranka_id = 1
+      break;
+    case 'sre':
+      stranka_id = 2
+      break;
+    case 'cet':
+      stranka_id = 3
+      break;
+    case 'pet':
+      stranka_id = 4
+      break;
+    case 'sob':
+      stranka_id = 5
+      break;
+    case 'ned':
+      stranka_id = 6
+      break;
+  }
+
+  let mysql_datetime = `1970-01-01 ${prosto_zacetek}:00`;
+
+
   const narocilo = {
-    stranka_eposta: `${day}`,
-    narocilo_cas: `${freeTimeStart}`, // popravi iz casa v datum?
-    stranka_id: day,
+    narocilo_cas: mysql_datetime,
+    stranka_id: stranka_id,
     delavec_id: delavec_id,
     storitev_id: storitev_id
   };
 
-  // const queryResult = await DB.novNarocilo(narocilo);
   console.log(narocilo);
-}
 
+  const queryResult = await DB.urnikNarocilo(narocilo);
+  return queryResult;
+}
 
 module.exports = router;
