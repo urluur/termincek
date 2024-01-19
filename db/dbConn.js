@@ -125,6 +125,7 @@ class Database {
     JOIN Stranka ON Narocilo.stranka_id = Stranka.stranka_id
     JOIN Podjetje ON Storitev.podjetje_id = Podjetje.podjetje_id
     WHERE Narocilo.delavec_id = ?
+    AND Narocilo.stranka_id NOT BETWEEN 0 AND 6
     ORDER BY Narocilo.narocilo_id DESC
     `, delavec_id);
   }
@@ -169,6 +170,27 @@ class Database {
   async izbrisiUrnik(delavec_id) {
     return this.query(`DELETE FROM Narocilo WHERE delavec_id = ? AND stranka_id BETWEEN 0 AND 6`, delavec_id);
   }
+
+  async ustvariPremor(cas, delavec_id, storitev_id) {
+    return this.query(
+      `INSERT INTO Narocilo (narocilo_cas, delavec_id, storitev_id) VALUES (?,?,?)`,
+      [cas, delavec_id, storitev_id]
+    );
+  }
+
+  async izbrisiPremor(narocilo_id) {
+    return this.query(`DELETE FROM Narocilo WHERE narocilo_id = ?`, narocilo_id);
+  }
+
+  async vsiPremori(delavec_id) {
+    return this.query(`
+    SELECT Narocilo.*, Storitev.*
+    FROM Narocilo
+    JOIN Storitev ON Narocilo.storitev_id = Storitev.storitev_id
+    WHERE delavec_id = ? AND stranka_id IS NULL
+    `, delavec_id);
+  }
+
 }
 
 const db = new Database();

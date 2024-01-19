@@ -399,4 +399,52 @@ async function createNarocilo(dan, prosto_zacetek, prosto_konec, delavec_id) {
   return queryResult;
 }
 
+router.get('/premori',
+  async (req, res, next) => {
+    try {
+      if (!req.session.user.delavec_id) {
+        return res.status(401).send('Uporabnik ni delavec');
+      }
+      const queryResult = await DB.vsiPremori(req.session.user.delavec_id)
+      res.status(200).json(queryResult);
+    } catch (err) {
+      next(err)
+    }
+  });
+
+router.post('/premor',
+  body('cas').notEmpty(),
+  body('storitev_id').isInt(),
+  validateRequest,
+  async (req, res, next) => {
+    try {
+      const { cas, storitev_id } = req.body;
+
+      let mysql_datetime = `1970-01-01 00:00:00`;
+
+      if (storitev_id < 1 || storitev_id > 7) {
+        return res.status(400).send('Neveljaven id storitve');
+      }
+
+      const queryResult = await DB.ustvariPremor(cas, req.session.user.delavec_id, storitev_id);
+      res.status(200).json(queryResult);
+    } catch (err) {
+      next(err)
+    }
+  });
+
+router.delete('/premor',
+  body('narocilo_id').isInt(),
+  validateRequest,
+  async (req, res, next) => {
+    try {
+      const { narocilo_id } = req.body;
+
+      const queryResult = await DB.izbrisiPremor(narocilo_id);
+      res.status(200).json(queryResult);
+    } catch (err) {
+      next(err)
+    }
+  });
+
 module.exports = router;
