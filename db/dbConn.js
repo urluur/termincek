@@ -191,6 +191,36 @@ class Database {
     `, delavec_id);
   }
 
+  async zasedeno(podjetje_id, day, weekday) {
+    return this.query(`
+    (
+      SELECT Delavec.delavec_id, Narocilo.narocilo_cas, Storitev.storitev_trajanje, Narocilo.narocilo_id
+      FROM Narocilo
+      JOIN Storitev ON Narocilo.storitev_id = Storitev.storitev_id
+      JOIN Delavec ON Narocilo.delavec_id = Delavec.delavec_id
+      WHERE Delavec.podjetje_id = ? AND DATE(Narocilo.narocilo_cas) = DATE(?)
+      ORDER BY Delavec.delavec_id ASC, Narocilo.narocilo_cas ASC
+    )
+    UNION
+    (
+      SELECT Delavec.delavec_id, Narocilo.narocilo_cas, Storitev.storitev_trajanje, Narocilo.narocilo_id
+      FROM Narocilo
+      JOIN Storitev ON Narocilo.storitev_id = Storitev.storitev_id
+      JOIN Delavec ON Narocilo.delavec_id = Delavec.delavec_id
+      WHERE Delavec.podjetje_id = ? AND Narocilo.stranka_id = ?
+      ORDER BY Delavec.delavec_id ASC, Narocilo.narocilo_cas ASC
+    )
+    UNION
+    (
+      SELECT Delavec.delavec_id, Narocilo.narocilo_cas, Storitev.storitev_trajanje, Narocilo.narocilo_id
+      FROM Narocilo
+      JOIN Storitev ON Narocilo.storitev_id = Storitev.storitev_id
+      JOIN Delavec ON Narocilo.delavec_id = Delavec.delavec_id
+      WHERE Delavec.podjetje_id = ? AND Narocilo.stranka_id IS NULL AND DATE(Narocilo.narocilo_cas) = DATE(?)
+      ORDER BY Delavec.delavec_id ASC, Narocilo.narocilo_cas ASC
+    )
+    `, [podjetje_id, day, podjetje_id, weekday, podjetje_id, day]);
+  }
 }
 
 const db = new Database();

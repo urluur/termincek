@@ -447,4 +447,21 @@ router.delete('/premor',
     }
   });
 
+router.post('/zasedeno/:podjetje_id',
+  param('podjetje_id').isInt(),
+  body('day').notEmpty(),
+  body('weekday').isInt(),
+  validateRequest,
+  async (req, res, next) => {
+    try {
+      console.log("MOJ BODY: " + JSON.stringify(req.body))
+      const { day, weekday } = req.body;
+      const queryResult = await DB.zasedeno(req.params.podjetje_id, day, weekday)
+      console.log("MOJ QUERY: " + JSON.stringify(queryResult))
+      res.status(200).json(queryResult);
+    } catch (err) {
+      next(err)
+    }
+  });
+
 module.exports = router;
