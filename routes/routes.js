@@ -83,7 +83,7 @@ router.get('/delavci/:podjetje_id',
 router.get('/stranka/narocila',
   async (req, res, next) => {
     try {
-      if (req.session.logged_in) {
+      if (req.session.user.stranka_id) {
         const queryResult = await DB.strankaNarocila(req.session.user.stranka_id)
         res.status(200).json(queryResult);
       }
