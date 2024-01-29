@@ -20,7 +20,8 @@ app.use(session({
 
 app.use(cors(
   {
-    origin: '*',
+    origin: ['*'],
+    methods: ['GET', 'POST', 'DELETE'],
     credentials: true,
     exposedHeaders: ['set-cookie']
   }
@@ -29,7 +30,6 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
 
-const db = require('./db/dbConn');
 
 const path = require('path');
 app.use(express.static(path.join(__dirname, 'build')));
