@@ -20,7 +20,8 @@ app.use(session({
 
 app.use(cors(
   {
-    origin: 'http://localhost:3000',
+    origin: ['*', 'http://localhost:3000'],
+    methods: ['GET', 'POST', 'DELETE'],
     credentials: true,
     exposedHeaders: ['set-cookie']
   }
@@ -29,10 +30,13 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
 
-const db = require('./db/dbConn');
 
-app.use('/', require('./routes/routes'));
+const path = require('path');
+app.use(express.static(path.join(__dirname, 'build')));
+
+app.use('/api', require('./routes/routes'));
 app.use('/auth', require('./routes/auth'));
+app.use('/', (req, res) => res.sendFile(path.join(__dirname, 'build', 'index.html')));
 
 app.listen(process.env.PORT, () => {
   console.log('Server is running on port: ' + process.env.PORT);

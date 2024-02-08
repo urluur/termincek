@@ -121,9 +121,9 @@ INSERT INTO `Storitev` (`storitev_id`, `storitev_ime`, `storitev_opis`, `storite
 (17, 'Likanje las', 'Ravnanje las z frizerskim likalnikom', 'https://images.pexels.com/photos/3738359/pexels-photo-3738359.jpeg', '17.00', 20, 1),
 (18, 'Barvanje', 'Barvanje moških ali ženskih las', 'https://ninjacosmico.com/wp-content/uploads/2017/12/dyedhair23.jpg', '45.00', 60, 1),
 (19, 'Beljenje', 'Beljenje las', 'https://content.latest-hairstyles.com/wp-content/uploads/white-platinum-blonde-hair-color.jpg', '35.00', 50, 1),
-(21, 'Prameni - Pol glave', 'Barvanje polovice dolžine las', 'https://i0.wp.com/hottesthaircuts.com/wp-content/uploads/2018/01/3.-Dark-to-Light-Ombre-Straight-Hair.jpg', '45.00', 120, 1),
-(22, 'Prameni - cela glava', 'Barvanje ombrov po celotni dolžini las', 'https://www.colouredhaircare.com/wp-content/uploads/2020/05/ombre.jpeg', '100.00', 150, 1),
-(23, '\"Na plešo prosm\"', 'Ukradite stil od najboljšega frizerja', 'https://i.pinimg.com/originals/9d/f5/9f/9df59f2cddbb0054aa0df2a4e145f8bc.jpg', '0.00', 15, 1);
+(20, 'Prameni - Pol glave', 'Barvanje polovice dolžine las', 'https://i0.wp.com/hottesthaircuts.com/wp-content/uploads/2018/01/3.-Dark-to-Light-Ombre-Straight-Hair.jpg', '45.00', 120, 1),
+(21, 'Prameni - cela glava', 'Barvanje ombrov po celotni dolžini las', 'https://www.colouredhaircare.com/wp-content/uploads/2020/05/ombre.jpeg', '100.00', 150, 1),
+(22, '\"Na plešo prosm\"', 'Ukradite stil od najboljšega frizerja', 'https://i.pinimg.com/originals/9d/f5/9f/9df59f2cddbb0054aa0df2a4e145f8bc.jpg', '0.00', 15, 1);
 
 -- --------------------------------------------------------
 

@@ -6,7 +6,7 @@ class Database {
   constructor() {
     this.conn = mysql.createConnection({
       host: process.env.DB_HOST,
-      port: process.env.DB_PORT,
+      port: process.env.DB_PORT || null,
       user: process.env.DB_USER,
       password: process.env.DB_PASS,
       database: process.env.DB_DATABASE
@@ -55,7 +55,7 @@ class Database {
   }
 
   async authStranka(stranka_eposta) {
-    return this.query('SELECT * FROM stranka WHERE stranka_eposta = ?', [stranka_eposta]);
+    return this.query('SELECT * FROM Stranka WHERE stranka_eposta = ?', [stranka_eposta]);
   }
 
   async registracijaStranka(ime, priimek, eposta, geslo, telefon) {
@@ -67,7 +67,7 @@ class Database {
   }
 
   async authDelavec(delavec_eposta) {
-    return this.query('SELECT * FROM delavec WHERE delavec_eposta = ?', delavec_eposta);
+    return this.query('SELECT * FROM Delavec WHERE delavec_eposta = ?', delavec_eposta);
   }
 
   async registracijaDelavec(delavec_ime, delavec_priimek, delavec_slika, delavec_eposta, delavec_geslo, delavec_telefon, podjetje_id) {
@@ -87,7 +87,7 @@ class Database {
   }
 
   async authPodjetje(podjetje_admin) {
-    return this.query('SELECT * FROM podjetje WHERE podjetje_admin = ?', podjetje_admin);
+    return this.query('SELECT * FROM Podjetje WHERE podjetje_admin = ?', podjetje_admin);
   }
 
   async vsaPodjetja() {
